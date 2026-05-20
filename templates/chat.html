@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rowdy the Homework Helper</title>
+  <link rel="icon" type="image/png" href="/static/rowdy.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Warm collegiate palette --------------------------------- */
+      --bg:           #fbf5e9;   /* parchment */
+      --bg-soft:      #fefbf4;
+      --surface:      #ffffff;
+
+      --ink:          #2b2018;   /* warm near-black */
+      --ink-soft:     #6f5d4e;
+      --ink-faded:    #b6a795;
+
+      --primary:      #1e6fa8;   /* Crowder blue (accent role) */
+      --primary-hov:  #185b8a;
+      --primary-soft: #e7f0f7;
+
+      --accent:       #c98b2b;   /* warm collegiate gold */
+      --accent-soft:  #f6e6c4;
+
+      --success:      #4f9d5c;
+
+      --border:       #ecdec1;
+      --border-soft:  #f4ecda;
+
+      /* Radius system ------------------------------------------ */
+      --r-sm:   8px;
+      --r-md:   12px;
+      --r-lg:   18px;
+      --r-xl:   24px;
+      --r-full: 9999px;
+
+      /* Shadow ------------------------------------------------- */
+      --shadow-sm: 0 2px 8px -2px rgba(54, 35, 19, 0.08);
+      --shadow-md: 0 8px 22px -8px rgba(54, 35, 19, 0.18);
+      --shadow-lg: 0 24px 60px -24px rgba(54, 35, 19, 0.28);
+
+      /* Fonts -------------------------------------------------- */
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+      --font-hand:    'Caveat', 'Comic Sans MS', cursive;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font-body);
+      color: var(--ink);
+      background: var(--bg);
+      background-image:
+        /* warm spotlight glow */
+        radial-gradient(ellipse 80% 50% at 50% 0%,    rgba(201, 139, 43, 0.10), transparent 60%),
+        radial-gradient(ellipse 70% 60% at 50% 100%,  rgba(30, 111, 168, 0.06), transparent 60%),
+        /* very faint paper grain */
+        repeating-linear-gradient(
+          45deg,
+          rgba(120, 80, 40, 0.012) 0 2px,
+          transparent 2px 4px
+        );
+      display: flex;
+      justify-content: center;
+    }
+
+    .shell {
+      width: 100%;
+      max-width: 760px;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-soft);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ===== Header ============================================ */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 18px 22px;
+      background:
+        linear-gradient(135deg, #143f63 0%, #1e6fa8 60%, #2a85c4 100%);
+      color: #ffffff;
+      position: relative;
+      overflow: hidden;
+    }
+    header::after {
+      /* subtle gold underline */
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--accent) 20%,
+        var(--accent) 80%,
+        transparent 100%);
+      opacity: 0.85;
+    }
+
+    .header-avatar {
+      position: relative;
+      width: 56px; height: 56px;
+      border-radius: var(--r-full);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2.5px solid rgba(255, 255, 255, 0.7);
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+    }
+    .header-avatar .fallback {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 26px;
+      color: var(--primary);
+    }
+    .header-avatar img {
+      position: relative;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .title-block { display: flex; flex-direction: column; line-height: 1.15; }
+    .title {
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 21px;
+      letter-spacing: -0.015em;
+    }
+    .subtitle {
+      font-size: 12.5px;
+      opacity: 0.88;
+      margin-top: 3px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* ===== Message log ====================================== */
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-soft);
+      scroll-behavior: smooth;
+    }
+
+    .turn {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      animation: rise 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .turn.me  { justify-content: flex-end; }
+    .turn.bot { justify-content: flex-start; }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .mini-avatar {
+      width: 34px; height: 34px;
+      border-radius: var(--r-full);
+      background: var(--surface);
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1.5px solid var(--border);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow-sm);
+      position: relative;
+    }
+    .mini-avatar .fallback {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--primary);
+    }
+    .mini-avatar img {
+      position: relative;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .msg {
+      max-width: 78%;
+      padding: 12px 16px;
+      border-radius: var(--r-lg);
+      line-height: 1.55;
+      font-size: 15px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      position: relative;
+    }
+    .me .msg {
+      background: var(--primary);
+      color: #ffffff;
+      border-bottom-right-radius: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+    .bot .msg {
+      background: var(--surface);
+      color: var(--ink);
+      border: 1px solid var(--border-soft);
+      border-bottom-left-radius: 6px;
+      box-shadow: var(--shadow-sm);
+    }
+    /* speech-bubble tail on bot messages */
+    .bot .msg::before {
+      content: "";
+      position: absolute;
+      left: -7px;
+      bottom: 8px;
+      width: 14px; height: 14px;
+      background: var(--surface);
+      border-left: 1px solid var(--border-soft);
+      border-bottom: 1px solid var(--border-soft);
+      transform: rotate(45deg);
+      border-bottom-left-radius: 3px;
+    }
+
+    .meta {
+      font-size: 12.5px;
+      margin-top: 6px;
+      opacity: 0.78;
+      font-style: italic;
+    }
+
+    /* ===== Typing indicator ================================== */
+    .typing {
+      display: inline-flex;
+      gap: 5px;
+      align-items: center;
+      padding: 4px 2px;
+    }
+    .typing span {
+      width: 8px; height: 8px;
+      background: var(--ink-faded);
+      border-radius: var(--r-full);
+      animation: dot-bounce 1.3s infinite ease-in-out;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.16s; }
+    .typing span:nth-child(3) { animation-delay: 0.32s; }
+    @keyframes dot-bounce {
+      0%, 80%, 100% { transform: scale(0.7); opacity: 0.45; }
+      40%           { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ===== Empty state ====================================== */
+    .empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px 48px;
+      gap: 22px;
+      text-align: center;
+    }
+    .empty.hidden { display: none; }
+
+    /* #log starts hidden; .visible reveals it as a flex column. */
+    #log:not(.visible) { display: none; }
+
+    .empty-avatar {
+      width: 128px; height: 128px;
+      border-radius: var(--r-full);
+      background: var(--surface);
+      overflow: hidden;
+      border: 4px solid var(--surface);
+      box-shadow:
+        var(--shadow-md),
+        0 0 0 3px var(--accent-soft);
+      display: grid;
+      place-items: center;
+      position: relative;
+      animation: bob 3.6s ease-in-out infinite;
+    }
+    .empty-avatar .fallback {
+      position: absolute; inset: 0;
+      display: grid; place-items: center;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 54px;
+      color: var(--primary);
+    }
+    .empty-avatar img {
+      position: relative;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    .empty-greeting {
+      font-family: var(--font-hand);
+      font-weight: 700;
+      font-size: 44px;
+      line-height: 1;
+      color: var(--primary);
+      margin: 0;
+    }
+    .empty-tagline {
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 17px;
+      color: var(--ink-soft);
+      max-width: 360px;
+      line-height: 1.45;
+      margin: -8px 0 6px;
+    }
+
+    .prompts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      width: 100%;
+      max-width: 460px;
+    }
+    .prompt-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-lg);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+      text-align: left;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .prompt-chip:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: var(--shadow-md);
+    }
+    .prompt-chip .emoji {
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* ===== Attachment pills ================================ */
+    #attached {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 0 22px;
+      background: var(--bg-soft);
+    }
+    #attached:not(:empty) {
+      padding: 10px 22px 0;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px 6px 12px;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent);
+      border-radius: var(--r-full);
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #6b4515;
+      max-width: 240px;
+    }
+    .pill .name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .pill button {
+      all: unset;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      width: 18px; height: 18px;
+      border-radius: var(--r-full);
+      color: #6b4515;
+      opacity: 0.65;
+    }
+    .pill button:hover { opacity: 1; background: rgba(107, 69, 21, 0.12); }
+
+    /* ===== Composer ========================================= */
+    form {
+      display: flex;
+      gap: 8px;
+      padding: 14px 18px 18px;
+      background: var(--bg-soft);
+      align-items: flex-end;
+      position: relative;
+    }
+    form::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 18px; right: 18px;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        var(--border) 20%,
+        var(--border) 80%,
+        transparent 100%);
+    }
+
+    .iconbtn {
+      width: 42px; height: 42px;
+      flex-shrink: 0;
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      background: var(--surface);
+      cursor: pointer;
+      color: var(--ink-soft);
+      display: grid;
+      place-items: center;
+      transition: border-color 0.15s, color 0.15s, transform 0.1s;
+    }
+    .iconbtn:hover { border-color: var(--primary); color: var(--primary); }
+    .iconbtn:active { transform: scale(0.94); }
+    .iconbtn svg { width: 18px; height: 18px; }
+
+    .composer-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-md);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .composer-wrap:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 111, 168, 0.15);
+    }
+    textarea {
+      flex: 1;
+      padding: 11px 14px;
+      border: 0;
+      background: transparent;
+      font: inherit;
+      font-size: 15px;
+      color: var(--ink);
+      resize: none;
+      max-height: 140px;
+      line-height: 1.4;
+      outline: none;
+    }
+    textarea::placeholder { color: var(--ink-faded); }
+
+    .send {
+      width: 42px; height: 42px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--primary), var(--primary-hov));
+      color: #ffffff;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s;
+      box-shadow: 0 2px 8px -2px rgba(30, 111, 168, 0.5);
+    }
+    .send:hover:not(:disabled) {
+      box-shadow: 0 4px 14px -2px rgba(30, 111, 168, 0.55);
+    }
+    .send:active:not(:disabled) { transform: scale(0.94); }
+    .send:disabled { opacity: 0.45; cursor: wait; }
+    .send svg { width: 18px; height: 18px; }
+
+    /* ===== Mobile =========================================== */
+    @media (max-width: 520px) {
+      header { padding: 14px 16px; gap: 12px; }
+      .header-avatar { width: 48px; height: 48px; }
+      .title { font-size: 19px; }
+      .subtitle { font-size: 11.5px; }
+      #log { padding: 18px 14px; gap: 14px; }
+      .msg { max-width: 82%; font-size: 14.5px; }
+      form { padding: 12px 14px 14px; }
+      .empty-avatar { width: 108px; height: 108px; }
+      .empty-greeting { font-size: 38px; }
+      .empty-tagline { font-size: 15.5px; }
+      .prompts { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="header-avatar">
+        <span class="fallback">R</span>
+        <img src="/static/rowdy.png" alt="" onerror="this.remove()" />
+      </div>
+      <div class="title-block">
+        <span class="title">Rowdy the Homework Helper</span>
+        <span class="subtitle">Student Success Center</span>
+      </div>
+    </header>
+
+    <!-- Empty state: shown until first message ------------------- -->
+    <div id="empty" class="empty">
+      <div class="empty-avatar">
+        <span class="fallback">R</span>
+        <img src="/static/rowdy.png" alt="Rowdy the mule mascot" onerror="this.remove()" />
+      </div>
+      <h1 class="empty-greeting">Howdy!</h1>
+      <p class="empty-tagline">
+        I'm Rowdy, your Crowder College study buddy.<br />
+        Ask me anything you're working on.
+      </p>
+      <div class="prompts">
+        <button class="prompt-chip" data-prompt="I'm stuck on a problem — can you walk me through it?">
+          <span class="emoji">🤔</span>
+          <span>I'm stuck on something</span>
+        </button>
+        <button class="prompt-chip" data-prompt="Quiz me on what I'm studying.">
+          <span class="emoji">📚</span>
+          <span>Quiz me</span>
+        </button>
+        <button class="prompt-chip" data-prompt="Can you explain a concept to me in plain English?">
+          <span class="emoji">💡</span>
+          <span>Explain something simply</span>
+        </button>
+        <button class="prompt-chip" data-prompt="Can you help me check my work?">
+          <span class="emoji">✅</span>
+          <span>Check my work</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Message log: hidden until first message ------------------ -->
+    <div id="log"></div>
+
+    <div id="attached"></div>
+
+    <form id="f" enctype="multipart/form-data">
+      <button id="attach" class="iconbtn" type="button" title="Attach PDF or image" aria-label="Attach file">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+        </svg>
+      </button>
+      <input id="file" type="file" multiple accept=".pdf,image/png,image/jpeg,image/gif,image/webp" hidden />
+      <div class="composer-wrap">
+        <textarea id="m" rows="1" autocomplete="off" placeholder="Ask Rowdy anything…"></textarea>
+      </div>
+      <button id="b" class="send" type="submit" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const log         = document.getElementById("log");
+    const empty       = document.getElementById("empty");
+    const form        = document.getElementById("f");
+    const input       = document.getElementById("m");
+    const sendBtn     = document.getElementById("b");
+    const fileInput   = document.getElementById("file");
+    const attachBtn   = document.getElementById("attach");
+    const attachedDiv = document.getElementById("attached");
+
+    // Track attached files in a Map so we can remove them individually.
+    const attached = new Map();   // key: unique id, value: File
+
+    /** Reveal the message log + hide the empty state on first message. */
+    function ensureLogVisible() {
+      if (log.classList.contains("visible")) return;
+      empty.classList.add("hidden");
+      log.classList.add("visible");
+    }
+
+    /** Build the inner content of a bot bubble:
+     *  mini-avatar + message text (+ optional meta). */
+    function makeBotTurn() {
+      const turn = document.createElement("div");
+      turn.className = "turn bot";
+
+      const avatar = document.createElement("div");
+      avatar.className = "mini-avatar";
+      avatar.innerHTML =
+        '<span class="fallback">R</span>' +
+        '<img src="/static/rowdy.png" alt="" onerror="this.remove()" />';
+
+      const msg = document.createElement("div");
+      msg.className = "msg";
+
+      turn.appendChild(avatar);
+      turn.appendChild(msg);
+      return { turn, msg };
+    }
+
+    /** Add a user or bot message to the log. */
+    function add(role, text, meta) {
+      ensureLogVisible();
+
+      if (role === "user") {
+        const turn = document.createElement("div");
+        turn.className = "turn me";
+        const msg = document.createElement("div");
+        msg.className = "msg";
+        msg.textContent = text;
+        if (meta) {
+          const m = document.createElement("div");
+          m.className = "meta";
+          m.textContent = meta;
+          msg.appendChild(m);
+        }
+        turn.appendChild(msg);
+        log.appendChild(turn);
+      } else {
+        const { turn, msg } = makeBotTurn();
+        msg.textContent = text;
+        log.appendChild(turn);
+      }
+      log.scrollTop = log.scrollHeight;
+    }
+
+    /** Show animated typing dots. Returns the turn element to remove later. */
+    function showTyping() {
+      ensureLogVisible();
+      const { turn, msg } = makeBotTurn();
+      msg.innerHTML = '<div class="typing"><span></span><span></span><span></span></div>';
+      turn.dataset.typing = "1";
+      log.appendChild(turn);
+      log.scrollTop = log.scrollHeight;
+      return turn;
+    }
+
+    /** Re-render the attached-file pills row from the `attached` map. */
+    function renderAttached() {
+      attachedDiv.innerHTML = "";
+      for (const [id, file] of attached) {
+        const pill = document.createElement("span");
+        pill.className = "pill";
+
+        const name = document.createElement("span");
+        name.className = "name";
+        name.textContent = file.name;
+
+        const removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.setAttribute("aria-label", "Remove " + file.name);
+        removeBtn.textContent = "×";
+        removeBtn.addEventListener("click", () => {
+          attached.delete(id);
+          renderAttached();
+        });
+
+        pill.appendChild(name);
+        pill.appendChild(removeBtn);
+        attachedDiv.appendChild(pill);
+      }
+    }
+
+    /** Auto-grow the textarea up to its CSS max-height. */
+    function autoGrow() {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    }
+
+    /* ----- Wire up events --------------------------------------- */
+
+    attachBtn.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", () => {
+      for (const f of fileInput.files) {
+        attached.set(crypto.randomUUID(), f);
+      }
+      fileInput.value = "";
+      renderAttached();
+    });
+
+    // Submit on Enter; allow Shift+Enter for newline.
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        form.requestSubmit();
+      }
+    });
+    input.addEventListener("input", autoGrow);
+
+    // Prompt chips: populate input and submit.
+    document.querySelectorAll(".prompt-chip").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        input.value = chip.dataset.prompt;
+        autoGrow();
+        form.requestSubmit();
+      });
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text  = input.value.trim();
+      const files = [...attached.values()];
+      if (!text && !files.length) return;
+
+      const fileMeta = files.length
+        ? `📎 ${files.length} file${files.length > 1 ? "s" : ""}: ${files.map(f => f.name).join(", ")}`
+        : null;
+      add("user", text || "(attachment only)", fileMeta);
+
+      const body = new FormData();
+      body.append("message", text);
+      for (const f of files) body.append("files", f);
+
+      // Reset composer state.
+      input.value = "";
+      autoGrow();
+      attached.clear();
+      renderAttached();
+      sendBtn.disabled = true;
+
+      const typingTurn = showTyping();
+
+      try {
+        const r = await fetch("/api/chat", { method: "POST", body });
+        if (!r.ok) throw new Error((await r.text()) || r.statusText);
+        const data = await r.json();
+        typingTurn.remove();
+        add("bot", data.reply);
+      } catch (err) {
+        typingTurn.remove();
+        add("bot", "Sorry — something went wrong. " + err.message);
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    });
+
+    // Focus the input on load for fast-start.
+    window.addEventListener("load", () => input.focus());
+  </script>
+</body>
+</html>
