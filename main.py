@@ -1,12 +1,13 @@
 """
-Rowdy the Homework Helper — standalone web POC.
+Rowdy the Enrollment Helper — standalone web POC.
 
-A simple chat UI backed by Claude. No authentication, no Canvas LTI; this
-exists to validate the tutor's behavior, prompt, and UX before wrestling
-with LMS integration.
+A simple chat UI backed by Claude that helps prospective and current
+students explore programs, apply, and enroll at Crowder College. No
+authentication; this exists to validate the persona, prompt, and UX
+before wrestling with a real admissions/CRM integration.
 
-Each browser session gets its own conversation, scoped by a session cookie.
-Conversations live in RAM and disappear on server restart.
+Each browser session gets its own conversation, scoped by a session
+cookie. Conversations live in RAM and disappear on server restart.
 
 Endpoints:
   GET   /          — chat UI
@@ -24,12 +25,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
-from claude_service import ClaudeTutor
+from claude_service import ClaudeEnrollment
 
 load_dotenv()
 BASE_DIR = Path(__file__).parent
 
-app = FastAPI(title="Rowdy — Homework Helper (POC)")
+app = FastAPI(title="Rowdy — Enrollment Helper (POC)")
 
 # Signed session cookies identify each browser. Lax SameSite is fine since
 # we're not iframed; HTTPS-only is off here so local `uvicorn` works without
@@ -45,7 +46,7 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-tutor = ClaudeTutor(model=os.environ.get("CLAUDE_MODEL", "claude-haiku-4-5-20251001"))
+rowdy = ClaudeEnrollment(model=os.environ.get("CLAUDE_MODEL", "claude-haiku-4-5-20251001"))
 
 # In-RAM conversation store, keyed by browser session id.
 CONVERSATIONS: dict[str, list[dict]] = {}
@@ -108,7 +109,7 @@ async def chat(
     history.append({"role": "user", "content": content_blocks})
 
     trimmed = _strip_old_attachments(history[-HISTORY_TURN_CAP:])
-    reply = await tutor.reply(history=trimmed)
+    reply = await rowdy.reply(history=trimmed)
     history.append({"role": "assistant", "content": reply})
     return {"reply": reply}
 
