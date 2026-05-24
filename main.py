@@ -1,8 +1,8 @@
 """
-Rowdy the Enrollment Helper — standalone web POC.
+Rowdy, Your Crowder Guide — standalone web POC.
 
 A simple chat UI backed by Claude that helps prospective and current
-students explore programs, apply, and enroll at Crowder College. No
+students explore programs, apply, and get started at Crowder College. No
 authentication; this exists to validate the persona, prompt, and UX
 before wrestling with a real admissions/CRM integration.
 
@@ -30,7 +30,7 @@ from claude_service import ClaudeEnrollment
 load_dotenv()
 BASE_DIR = Path(__file__).parent
 
-app = FastAPI(title="Rowdy — Enrollment Helper (POC)")
+app = FastAPI(title="Rowdy — Your Crowder Guide (POC)")
 
 # Signed session cookies identify each browser. Lax SameSite is fine since
 # we're not iframed; HTTPS-only is off here so local `uvicorn` works without
